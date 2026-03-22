@@ -96,9 +96,14 @@ func (g *Numeric) String() string {
 }
 
 func NewNumeric(base int, start, end, step uint64, pad bool) Generator {
+	if start == 0 && end == 0xffff_ffff_ffff_ffff {
+		// Due to the current implementation, the full uint64 range causes a panic due to an overflow.
+		end--
+	}
+
 	count := uint64((end-start)/step + 1)
 	min := numSize(start, base)
-	max := numSize((count-1)*step, base)
+	max := numSize(start+(count-1)*step, base)
 
 	return &Numeric{
 		base:  base,

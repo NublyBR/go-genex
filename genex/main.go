@@ -24,14 +24,14 @@ var (
 )
 
 func init() {
-	cmd.Flags().IntVarP(&argNum, "num", "n", 8, "number of samples to generate")
+	cmd.Flags().IntVarP(&argNum, "num", "n", 8, "number of samples to generate; set to 0 to generate all possibilities in order")
 	cmd.Flags().BoolVarP(&argSecure, "secure", "s", false, "use cryptographically secure PRNG")
 }
 
 func run(_ *cobra.Command, args []string) {
 	opts := make([]genex.Option, 0, 1)
 
-	if argSecure {
+	if argSecure && argNum > 0 {
 		opts = append(opts, genex.OptionRNG(genex.SecureRand))
 	}
 
@@ -60,11 +60,21 @@ func run(_ *cobra.Command, args []string) {
 	out := bufio.NewWriter(os.Stdout)
 	defer out.Flush()
 
-	for i := 0; i < argNum; i++ {
-		pattern.Sample(buf)
-		out.Write(buf.Bytes())
-		out.WriteByte('\n')
-		buf.Reset()
+	if argNum <= 0 {
+		iter := pattern.Iterate()
+		for iter.Next() {
+			iter.Get(buf)
+			out.Write(buf.Bytes())
+			out.WriteByte('\n')
+			buf.Reset()
+		}
+	} else {
+		for i := 0; i < argNum; i++ {
+			pattern.Sample(buf)
+			out.Write(buf.Bytes())
+			out.WriteByte('\n')
+			buf.Reset()
+		}
 	}
 }
 
