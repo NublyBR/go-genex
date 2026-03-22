@@ -1,6 +1,8 @@
 package genex
 
 import (
+	"crypto/rand"
+	"encoding/binary"
 	"fmt"
 	"math/big"
 	"sync/atomic"
@@ -34,4 +36,10 @@ func FastRand() uint64 {
 	z = (z ^ (z >> 30)) * 0xbf58476d1ce4e5b9
 	z = (z ^ (z >> 27)) * 0x94d049bb133111eb
 	return z ^ (z >> 31)
+}
+
+func SecureRand() uint64 {
+	var buf [8]byte
+	rand.Read(buf[:])
+	return binary.BigEndian.Uint64(buf[:])
 }

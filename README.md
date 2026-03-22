@@ -43,8 +43,29 @@ Sample-zdeO6h8MysaVPfPT8Fa3KVq5958Q2R2N
 
 ## Installation
 
+Install package:
+
 ```sh
 go get github.com/NublyBR/go-genex
+```
+
+Install CLI:
+
+```sh
+go install github.com/NublyBR/go-genex/genex@latest
+```
+
+## Randomness
+
+By default, `go-genex` uses a fast non-cryptographic PRNG for performance.
+
+If you need values generated with cryptographically secure randomness, provide a secure RNG explicitly:
+
+```go
+pattern, err := genex.Compile("...", genex.OptionRNG(genex.SecureRand))
+if err != nil {
+    panic(err)
+}
 ```
 
 ## Features
@@ -90,12 +111,12 @@ BenchmarkIter-6         11856430               110.7 ns/op             0 B/op   
 
 | Characters                                                                  | Meaning                                                                                                                                                                      |
 | --------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| <center>`[xyz]`<br>`[a-c]`<br>`[\n\x1f]`</center>                           | **Character class:** Generates one character from the set. Supports literal characters, ranges, and hexadecimal escape sequences.                                            |
-| <center>`(hello)`</center>                                                  | **Group:** Groups expressions together, mainly for composition with repeaters such as `(...){32}`.                                                                           |
-| <center>`a\|b`<br>`(a\|b)`</center>                                         | **Disjunction:** Generates one of multiple alternatives.                                                                                                                     |
-| <center>`<64>`<br>`<base/start/end>`<br>`</start/end>`<br>`<!end>`</center> | **Numeric expression:** Generates numbers from a fixed value or numeric range. Supports explicit base selection and optional zero-padding to the width of the maximum value. |
-| <center>`...{64}`<br>`...{32,64}`</center>                                  | **Repeater:** Repeats the previous value `n` times. Also accepts a minimum and maximum value.                                                                                |
-| <center>`x*`<br>`x+`<br>`x?`</center>                                       | **Quantifiers:** Shorthand for specific repeater setups.<br>`x*` = `x{0,8}`<br>`x+` = `x{1,8}`<br>`x?` = `x{0,1}`                                                            |
+| `[xyz]`<br>`[a-c]`<br>`[\n\x1f]`                           | **Character class:** Generates one character from the set. Supports literal characters, ranges, and hexadecimal escape sequences.                                            |
+| `(hello)`                                                  | **Group:** Groups expressions together, mainly for composition with repeaters such as `(...){32}`.                                                                           |
+| `a\|b`<br>`(a\|b)`                                         | **Disjunction:** Generates one of multiple alternatives.                                                                                                                     |
+| `<64>`<br>`<base/start/end>`<br>`</start/end>`<br>`<!end>` | **Numeric expression:** Generates numbers from a fixed value or numeric range. Supports explicit base selection and optional zero-padding to the width of the maximum value. |
+| `...{64}`<br>`...{32,64}`                                  | **Repeater:** Repeats the previous value `n` times. Also accepts a minimum and maximum value.                                                                                |
+| `x*`<br>`x+`<br>`x?`                                       | **Quantifiers:** Shorthand for specific repeater setups.<br>`x*` = `x{0,8}`<br>`x+` = `x{1,8}`<br>`x?` = `x{0,1}`                                                            |
 
 ### Syntax examples
 

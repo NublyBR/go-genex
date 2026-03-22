@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
 	"os"
@@ -18,17 +19,24 @@ var (
 		Run:  run,
 	}
 
-	samples int
+	argNum    int
+	argSecure bool
 )
 
 func init() {
-	cmd.Flags().IntVarP(&samples, "num", "n", 8, "number of samples to generate")
+	cmd.Flags().IntVarP(&argNum, "num", "n", 8, "number of samples to generate")
+	cmd.Flags().BoolVarP(&argSecure, "secure", "s", false, "use cryptographically secure PRNG")
 }
 
 func run(_ *cobra.Command, args []string) {
-	start := time.Now()
+	opts := make([]genex.Option, 0, 1)
 
-	g, err := genex.Compile(args[0])
+	if argSecure {
+		opts = append(opts, genex.OptionRNG(genex.SecureRand))
+	}
+
+	start := time.Now()
+	g, err := genex.Compile(args[0], opts...)
 	if err != nil {
 		panic(err)
 	}
@@ -49,10 +57,13 @@ func run(_ *cobra.Command, args []string) {
 	fmt.Fprintf(os.Stderr, "] Time: \033[32m%s\033[0m\n", time.Since(start))
 
 	buf := bytes.NewBuffer(make([]byte, 0, max))
+	out := bufio.NewWriter(os.Stdout)
+	defer out.Flush()
 
-	for i := 0; i < samples; i++ {
+	for i := 0; i < argNum; i++ {
 		g.Sample(buf)
-		fmt.Println(buf.String())
+		out.Write(buf.Bytes())
+		out.WriteByte('\n')
 		buf.Reset()
 	}
 }
