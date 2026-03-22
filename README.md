@@ -109,8 +109,8 @@ BenchmarkIter-6         11856430               110.7 ns/op             0 B/op   
 
 ## Pattern syntax
 
-| Characters                                                                  | Meaning                                                                                                                                                                      |
-| --------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Characters                                                 | Meaning                                                                                                                                                                      |
+| ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `[xyz]`<br>`[a-c]`<br>`[\n\x1f]`                           | **Character class:** Generates one character from the set. Supports literal characters, ranges, and hexadecimal escape sequences.                                            |
 | `(hello)`                                                  | **Group:** Groups expressions together, mainly for composition with repeaters such as `(...){32}`.                                                                           |
 | `a\|b`<br>`(a\|b)`                                         | **Disjunction:** Generates one of multiple alternatives.                                                                                                                     |
@@ -124,7 +124,7 @@ BenchmarkIter-6         11856430               110.7 ns/op             0 B/op   
 // Generate padded hexadecimal numbers from 0000 to ffff
 `<!16/0/ffff>`
 
-// Generate sample usernames such as user-admin-59
+// Generate sample usernames such as user-admin-159
 `user-(admin|staff|guest)-<100/999>`
 
 // Generate IPv4 addresses
