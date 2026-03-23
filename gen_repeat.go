@@ -71,7 +71,7 @@ func (g *Repeat) Iterate() *Iterator {
 }
 
 func (g *Repeat) Sample(w *bytes.Buffer) {
-	count := g.rmin + int(g.rng()%uint64(g.rmax-g.rmin+1))
+	count := g.rmin + int(g.rng()%int64(g.rmax-g.rmin+1))
 
 	for range count {
 		g.inner.Sample(w)

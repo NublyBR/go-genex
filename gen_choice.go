@@ -67,7 +67,7 @@ func (g *Choice) Iterate() *Iterator {
 }
 
 func (g *Choice) Sample(w *bytes.Buffer) {
-	g.items[g.rng()%uint64(len(g.items))].Sample(w)
+	g.items[g.rng()%int64(len(g.items))].Sample(w)
 }
 
 func (g *Choice) String() string {

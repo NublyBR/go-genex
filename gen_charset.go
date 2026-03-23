@@ -48,7 +48,7 @@ func (g *Charset) Iterate() *Iterator {
 
 func (g *Charset) Sample(w *bytes.Buffer) {
 	w.WriteByte(
-		g.chrs[g.rng()%uint64(len(g.chrs))],
+		g.chrs[g.rng()%int64(len(g.chrs))],
 	)
 }
 

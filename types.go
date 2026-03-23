@@ -16,7 +16,7 @@ type Generator interface {
 	Complexity() int
 }
 
-type RNG func() uint64
+type RNG func() int64
 
 var _ = []Generator{
 	&Concat{},
