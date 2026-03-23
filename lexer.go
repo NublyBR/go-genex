@@ -15,6 +15,8 @@ const (
 	TokOpt
 	TokPlus
 	TokStar
+	TokAny
+	TokSpecial
 
 	TokParOpen
 	TokParClose
@@ -39,12 +41,13 @@ func (t Token) String() string {
 }
 
 var (
-	special = `\|\(\)\[\]\{\}\<\>\?\+\*`
-	escape  = `\\(x[0-9a-fA-F]{2}|.)`
+	special = `\|\(\)\[\]\{\}\<\>\?\+\*\.\\`
+	escape  = `\\(x[0-9a-fA-F]{2}|[^wWsSdhH])`
 	escapeR = `\\(?:x[0-9a-fA-F]{2}|.)`
 	// reSpecial = regexp.MustCompile(`^[` + special + `]`)
-	reRaw    = regexp.MustCompile(`^(` + escape + `|[^` + special + `])+`)
-	reEscape = regexp.MustCompile(escape)
+	reRaw     = regexp.MustCompile(`^(` + escape + `|[^` + special + `])+`)
+	reEscape  = regexp.MustCompile(escape)
+	reSpecial = regexp.MustCompile(`^\\[wWsSdhH]`)
 )
 
 func NewToken(typ TokenType, val []byte) Token {
@@ -90,6 +93,7 @@ var tokMap = [256]TokenType{
 	'}': TokCurClose,
 	'<': TokTagOpen,
 	'>': TokTagClose,
+	'.': TokAny,
 }
 
 func Tokenize(data []byte) []Token {
@@ -104,6 +108,12 @@ func Tokenize(data []byte) []Token {
 
 		if res := reRaw.Find(data); res != nil {
 			tk = append(tk, NewToken(TokRaw, Unescape(res)))
+			data = data[len(res):]
+			continue
+		}
+
+		if res := reSpecial.Find(data); res != nil {
+			tk = append(tk, NewToken(TokSpecial, res[1:]))
 			data = data[len(res):]
 			continue
 		}

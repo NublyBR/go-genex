@@ -36,23 +36,23 @@ func run(_ *cobra.Command, args []string) {
 	}
 
 	start := time.Now()
-	pattern, err := genex.Compile(args[0], opts...)
+	gen, err := genex.Compile(args[0], opts...)
 	if err != nil {
 		panic(err)
 	}
 
-	min, max := pattern.Bounds()
+	min, max := gen.Bounds()
 	var bounds string
 	if min == max {
 		bounds = fmt.Sprint(min)
 	} else {
 		bounds = fmt.Sprintf("%d-%d", min, max)
 	}
-	fmt.Fprintf(os.Stderr, "] Compiled: %s\n", pattern)
+	fmt.Fprintf(os.Stderr, "] Compiled: %s\n", gen)
 	fmt.Fprintf(os.Stderr, "] Count: \033[32m%s\033[0m | Bounds: \033[32m%s\033[0m | Complexity: \033[32m%d\033[0m\n",
-		genex.Readable(pattern.Count()),
+		genex.Readable(gen.Count()),
 		bounds,
-		pattern.Complexity(),
+		gen.Complexity(),
 	)
 	fmt.Fprintf(os.Stderr, "] Time: \033[32m%s\033[0m\n", time.Since(start))
 
@@ -61,7 +61,7 @@ func run(_ *cobra.Command, args []string) {
 	defer out.Flush()
 
 	if argNum <= 0 {
-		iter := pattern.Iterate()
+		iter := gen.Iterate()
 		for iter.Next() {
 			iter.Get(buf)
 			out.Write(buf.Bytes())
@@ -70,7 +70,7 @@ func run(_ *cobra.Command, args []string) {
 		}
 	} else {
 		for i := 0; i < argNum; i++ {
-			pattern.Sample(buf)
+			gen.Sample(buf)
 			out.Write(buf.Bytes())
 			out.WriteByte('\n')
 			buf.Reset()

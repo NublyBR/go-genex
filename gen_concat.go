@@ -88,37 +88,59 @@ func NewConcat(o ...Generator) Generator {
 		return o[0]
 	}
 
-	for {
-		retry := false
-		flat := make([]Generator, 0, len(o))
+	tryFlat := false
 
-		for _, item := range o {
-			switch cast := item.(type) {
-			case *Concat:
-				flat = append(flat, cast.items...)
-				retry = true
-			case *Fixed:
-				if len(flat) > 0 {
-					if fixed, ok := flat[len(flat)-1].(*Fixed); ok {
-						nw := make([]byte, len(fixed.text)+len(cast.text))
-						copy(nw, fixed.text)
-						copy(nw[len(fixed.text):], cast.text)
-						fixed.text = nw
-						continue
-					}
-				}
-				if len(cast.text) > 0 {
-					flat = append(flat, cast)
-				}
-			default:
-				flat = append(flat, cast)
-			}
+	for i := range len(o) {
+		if _, ok := o[i].(*Concat); ok {
+			tryFlat = true
+			break
 		}
 
-		o = flat
-
-		if !retry {
+		if i == len(o)-1 {
 			break
+		}
+
+		if _, ok := o[i].(Fixed); ok {
+			if _, ok := o[i+1].(Fixed); ok {
+				tryFlat = true
+				break
+			}
+		}
+	}
+
+	if tryFlat {
+		for {
+			retry := false
+			flat := make([]Generator, 0, len(o))
+
+			for _, item := range o {
+				switch cast := item.(type) {
+				case *Concat:
+					flat = append(flat, cast.items...)
+					retry = true
+				case Fixed:
+					if len(flat) > 0 {
+						if fixed, ok := flat[len(flat)-1].(Fixed); ok {
+							nw := make([]byte, len(fixed)+len(cast))
+							copy(nw, fixed)
+							copy(nw[len(fixed):], cast)
+							flat[len(flat)-1] = Fixed(nw)
+							continue
+						}
+					}
+					if len(cast) > 0 {
+						flat = append(flat, cast)
+					}
+				default:
+					flat = append(flat, cast)
+				}
+			}
+
+			o = flat
+
+			if !retry {
+				break
+			}
 		}
 	}
 

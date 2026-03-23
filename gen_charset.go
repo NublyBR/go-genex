@@ -2,15 +2,13 @@ package genex
 
 import (
 	"bytes"
-	"fmt"
 	"math/big"
 	"sort"
-	"strings"
 )
 
 type Charset struct {
 	chrs []byte
-	repr [][2]byte
+	repr string
 	rng  RNG
 }
 
@@ -53,15 +51,7 @@ func (g *Charset) Sample(w *bytes.Buffer) {
 }
 
 func (g *Charset) String() string {
-	vars := make([]string, len(g.repr))
-	for i, r := range g.repr {
-		if r[0] == r[1] {
-			vars[i] = string(r[0])
-		} else {
-			vars[i] = fmt.Sprintf("%c-%c", r[0], r[1])
-		}
-	}
-	return fmt.Sprintf("[\033[32m%s\033[0m]", strings.Join(vars, ""))
+	return g.repr
 }
 
 func NewCharset(c ...byte) Generator {
@@ -69,12 +59,12 @@ func NewCharset(c ...byte) Generator {
 		return NewFixed(nil)
 	}
 
-	if len(c)%2 == 1 {
-		c = append(c, c[len(c)-1])
+	if len(c) == 1 || (len(c) == 2 && c[0] == c[1]) {
+		return NewFixed(c[:1])
 	}
 
-	if len(c) == 1 && c[0] == c[1] {
-		return NewFixed([]byte{c[0]})
+	if len(c)%2 == 1 {
+		c = append(c, c[len(c)-1])
 	}
 
 	count := 0
@@ -91,7 +81,6 @@ func NewCharset(c ...byte) Generator {
 	}
 
 	expand := make([]byte, 0, count)
-	repr := make([][2]byte, 0, len(c)/2)
 
 	for i := 0; i < len(c); i += 2 {
 		start := c[i]
@@ -100,32 +89,55 @@ func NewCharset(c ...byte) Generator {
 		for j := start; j <= end; j++ {
 			expand = append(expand, j)
 		}
-
-		repr = append(repr, [2]byte{start, end})
 	}
 
 	sort.Slice(expand, func(i, j int) bool {
 		return expand[i] < expand[j]
 	})
 
-	pruned := make([]byte, 0, len(expand))
-	pruned = append(pruned, expand[0])
+	repr := bytes.NewBuffer(make([]byte, 0, len(expand)*2+20))
+	repr.WriteString("\033[32m[\033[0m")
+
+	pushrepr := func(a, b byte) {
+		if a == b {
+			writeSpecial(repr, a)
+			return
+		}
+
+		writeSpecial(repr, a)
+		repr.WriteString("\033[32m-\033[0m")
+		writeSpecial(repr, b)
+	}
+
+	first := expand[0]
+	j := 0
 
 	for i := range len(expand) - 1 {
 		if expand[i] != expand[i+1] {
-			pruned = append(pruned, expand[i+1])
+			j++
+			expand[j] = expand[i+1]
+
+			if expand[j-1] != expand[j]-1 {
+				pushrepr(first, expand[j-1])
+				first = expand[j]
+			}
 		}
 	}
 
-	switch len(pruned) {
+	pushrepr(first, expand[len(expand)-1])
+	repr.WriteString("\033[32m]\033[0m")
+
+	expand = expand[:j]
+
+	switch len(expand) {
 	case 0:
 		return NewFixed(nil)
 	case 1:
-		return NewFixed(pruned)
+		return NewFixed(expand)
 	default:
 		return &Charset{
-			chrs: pruned,
-			repr: repr,
+			chrs: expand,
+			repr: repr.String(),
 			rng:  FastRand,
 		}
 	}

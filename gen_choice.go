@@ -89,8 +89,8 @@ func NewChoice(o ...Generator) Generator {
 	all := true
 	chr := make([]byte, 0, 2*len(o))
 	for _, gen := range o {
-		if f, ok := gen.(*Fixed); ok && len(f.text) == 1 {
-			chr = append(chr, f.text[0], f.text[0])
+		if f, ok := gen.(Fixed); ok && len(f) == 1 {
+			chr = append(chr, f[0], f[0])
 			continue
 		}
 
@@ -111,8 +111,8 @@ func NewChoice(o ...Generator) Generator {
 			case *Choice:
 				flat = append(flat, cast.items...)
 				retry = true
-			case *Fixed:
-				txt := hex.EncodeToString(cast.text)
+			case Fixed:
+				txt := hex.EncodeToString(cast)
 				if !nore[txt] {
 					nore[txt] = true
 					flat = append(flat, cast)

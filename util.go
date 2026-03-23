@@ -1,6 +1,7 @@
 package genex
 
 import (
+	"bytes"
 	"crypto/rand"
 	"encoding/binary"
 	"fmt"
@@ -42,4 +43,55 @@ func SecureRand() int64 {
 	var buf [8]byte
 	rand.Read(buf[:])
 	return int64(binary.BigEndian.Uint64(buf[:]) & 0x7fff_ffff_ffff_ffff)
+}
+
+func SampleString(gen Generator) string {
+	_, max := gen.Bounds()
+	buf := bytes.NewBuffer(make([]byte, 0, max))
+	gen.Sample(buf)
+	return buf.String()
+}
+
+var sp = [256]byte{
+	'-':  '-',
+	'|':  '|',
+	'?':  '?',
+	'+':  '+',
+	'*':  '*',
+	'(':  '(',
+	')':  ')',
+	'[':  '[',
+	']':  ']',
+	'{':  '{',
+	'}':  '}',
+	'<':  '<',
+	'>':  '>',
+	'.':  '.',
+	'\a': 'a',
+	'\b': 'b',
+	'\f': 'f',
+	'\n': 'n',
+	'\r': 'r',
+	'\t': 't',
+	'\v': 'v',
+}
+
+func writeSpecial(w *bytes.Buffer, c byte) {
+	const hex = "0123456789abcdef"
+
+	if sp[c] != 0 {
+		w.WriteByte('\\')
+		w.WriteByte(sp[c])
+		return
+	}
+
+	if c < '\x19' || c > '\x7e' {
+		w.WriteByte('\\')
+		w.WriteByte('x')
+		w.WriteByte(hex[c>>4])
+		w.WriteByte(hex[c&0xF])
+		return
+	}
+
+	w.WriteByte(c)
 }

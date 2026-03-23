@@ -109,15 +109,15 @@ func NewRepeat(g Generator, rmin, rmax int) Generator {
 		return NewFixed(nil)
 	}
 
-	if f, ok := g.(*Fixed); ok {
+	if f, ok := g.(Fixed); ok {
 		if rmin == rmax {
-			res := make([]byte, 0, len(f.text)*rmin)
+			res := make([]byte, 0, len(f)*rmin)
 			for range rmin {
-				res = append(res, f.text...)
+				res = append(res, f...)
 			}
 			return NewFixed(res)
 		}
-		if len(f.text) == 0 {
+		if len(f) == 0 {
 			return f
 		}
 	}

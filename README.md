@@ -5,24 +5,24 @@
 
 Compile regex-inspired patterns into fast generators for producing matching values.
 
-Compiled patterns sample efficiently, making `go-genex` a good fit for tests, fixtures, fuzzing, and synthetic data generation.
+Compiled generators sample efficiently, making `go-genex` a good fit for tests, fixtures, fuzzing, and synthetic data generation.
 
 > `go-genex` is not a full regex engine. It implements a regex-inspired language designed for efficient generation rather than matching.
 
 ## Example
 
 ```go
-pattern, err := genex.Compile(`Sample-[a-zA-Z0-9]{32}`)
+gen, err := genex.Compile(`Sample-[a-zA-Z0-9]{32}`)
 if err != nil {
     panic(err)
 }
 
-_, maxSize := pattern.Bounds()
+_, maxSize := gen.Bounds()
 
 buf := bytes.NewBuffer(make([]byte, 0, maxSize))
 
 for i := 0; i < 8; i++ {
-    pattern.Sample(buf)
+    gen.Sample(buf)
     fmt.Println(buf.String())
     buf.Reset()
 }
@@ -62,7 +62,7 @@ By default, `go-genex` uses a fast non-cryptographic PRNG for performance.
 If you need values generated with cryptographically secure randomness, provide a secure RNG explicitly:
 
 ```go
-pattern, err := genex.Compile("...", genex.OptionRNG(genex.SecureRand))
+gen, err := genex.Compile("...", genex.OptionRNG(genex.SecureRand))
 if err != nil {
     panic(err)
 }
@@ -72,15 +72,15 @@ if err != nil {
 
 ### Combinatronics
 
-Each compiled pattern can give you useful information about itself.
+Each compiled generator can give you useful information about itself.
 
-* `min, max = pattern.Bounds()` - Get the minimum and maximum size of generated strings.
-* `count = pattern.Count()` - Get a `*big.Int` representing how many values exist in the pattern's search-space.
-* `complexity = pattern.Complexity()` - Get how many nodes are in the AST. Does not necessarily reflect the time complexity to generate values.
+* `min, max = gen.Bounds()` - Get the minimum and maximum size of generated strings.
+* `count = gen.Count()` - Get a `*big.Int` representing how many values exist in the generator's search-space.
+* `complexity = gen.Complexity()` - Get how many nodes are in the AST. Does not necessarily reflect the time complexity to generate values.
 
 ### Fast sampling
 
-Compiled patterns can be sampled efficiently, making `go-genex` suitable for tests, fuzzing inputs, fixtures, and synthetic data generation.
+Compiled generators can be sampled efficiently, making `go-genex` suitable for tests, fuzzing inputs, fixtures, and synthetic data generation.
 
 ### Zero-allocation generation
 
@@ -109,35 +109,38 @@ BenchmarkIter-6         11856430               110.7 ns/op             0 B/op   
 
 ## Pattern syntax
 
-| Characters                                                 | Meaning                                                                                                                                                                      |
-| ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `[xyz]`<br>`[a-c]`<br>`[\n\x1f]`                           | **Character class:** Generates one character from the set. Supports literal characters, ranges, and hexadecimal escape sequences.                                            |
-| `(hello)`                                                  | **Group:** Groups expressions together, mainly for composition with repeaters such as `(...){32}`.                                                                           |
-| `a\|b`<br>`(a\|b)`                                         | **Disjunction:** Generates one of multiple alternatives.                                                                                                                     |
-| `<64>`<br>`<base/start/end>`<br>`</start/end>`<br>`<!end>` | **Numeric expression:** Generates numbers from a fixed value or numeric range. Supports explicit base selection and optional zero-padding to the width of the maximum value. |
-| `...{64}`<br>`...{32,64}`                                  | **Repeater:** Repeats the previous value `n` times. Also accepts a minimum and maximum value.                                                                                |
-| `x*`<br>`x+`<br>`x?`                                       | **Quantifiers:** Shorthand for specific repeater setups.<br>`x*` = `x{0,8}`<br>`x+` = `x{1,8}`<br>`x?` = `x{0,1}`                                                            |
+| Characters                                                | Meaning                                                                                                                                                                      |
+| --------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `[xyz]`<br>`[a-c]`<br>`[\n\x1f]`                          | **Character class:** Generates one character from the set. Supports literal characters, ranges, and hexadecimal escape sequences.                                            |
+| `(hello)`                                                 | **Group:** Groups expressions together, mainly for composition with repeaters such as `(...){32}`.                                                                           |
+| `a\|b`<br>`(a\|b)`                                        | **Disjunction:** Generates one of multiple alternatives.                                                                                                                     |
+| `<64>`<br>`<base:start/end>`<br>`<start/end>`<br>`<!end>` | **Numeric expression:** Generates numbers from a fixed value or numeric range. Supports explicit base selection and optional zero-padding to the width of the maximum value. |
+| `...{64}`<br>`...{32,64}`                                 | **Repeater:** Repeats the previous value `n` times. Also accepts a minimum and maximum value.                                                                                |
+| `x*`<br>`x+`<br>`x?`                                      | **Quantifiers:** Shorthand for specific repeater setups.<br>`x*` = `x{0,8}`<br>`x+` = `x{1,8}`<br>`x?` = `x{0,1}`                                                            |
 
 ### Syntax examples
 
 ```go
 // Generate padded hexadecimal numbers from 0000 to ffff
-`<!16/0/ffff>`
+`<!16:ffff>`
 
-// Generate sample usernames such as user-admin-159
+// Generate unpadded octal numbers from 0 to 777
+`<8:777>`
+
+// Generate sample usernames such as 'user-admin-159'
 `user-(admin|staff|guest)-<100/999>`
 
 // Generate IPv4 addresses
-`(<255>.){3}<255>`
+`(<255>\.){3}<255>`
 
 // Generate IPv6 addresses
 `(<!16:ffff>:){7}<!16:ffff>`
 
 // Generate UUIDv4's
-`[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}`
+`\h{8}-\h{4}-4\h{3}-[89ab]\h{3}-\h{12}`
 
 // Generate a strong password using all visible ASCII characters
-`[!-~]{64}`
+`.{64}`
 ```
 
 ## Non-goals

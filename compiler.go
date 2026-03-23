@@ -148,6 +148,31 @@ func (t *TokenConsumer) Parse() (Generator, error) {
 		}
 		return t.opt(NewFixed(next.Value)), nil
 
+	case TokAny:
+		return t.Multify(t.opt(NewCharset('!', '~')))
+
+	case TokSpecial:
+		inner := NewFixed(nil)
+
+		switch next.Value[0] {
+		case 'w':
+			inner = NewCharset('a', 'z', 'A', 'Z', '0', '9', '_', '_')
+		case 'W':
+			inner = NewCharset('!', '/', ':', '@', '[', '^', '`', '`', '{', '~')
+		case 's':
+			inner = NewCharset(' ', ' ', '\t', '\t', '\f', '\f', '\r', '\r', '\n', '\n')
+		case 'S':
+			inner = NewCharset('!', '~')
+		case 'd':
+			inner = NewCharset('0', '9')
+		case 'h':
+			inner = NewCharset('0', '9', 'a', 'f')
+		case 'H':
+			inner = NewCharset('0', '9', 'A', 'F')
+		}
+
+		return t.Multify(t.opt(inner))
+
 	case TokParOpen:
 		choice := []Generator{}
 		concat := []Generator{}
@@ -183,27 +208,65 @@ func (t *TokenConsumer) Parse() (Generator, error) {
 		return t.Multify(t.opt(NewChoice(choice...)))
 
 	case TokBraOpen:
-		inner := t.Get()
-		if inner.Type != TokRaw {
-			return nil, errUnexpected(inner)
-		}
+		opts := make([]byte, 0, 2*16)
+		buf := bytes.NewBuffer(nil)
 
-		if close := t.Get(); close.Type != TokBraClose {
-			return nil, errUnexpected(close)
-		}
+		commit := func() {
+			if buf.Len() == 0 {
+				return
+			}
+			defer buf.Reset()
 
-		mt := reCharset.FindAllSubmatch([]byte(inner.Value), -1)
-		opts := make([]byte, 0, 2*len(mt))
-		for _, cur := range mt {
-			if len(cur[3]) > 0 {
-				val := Unescape(cur[3])
-				opts = append(opts, val[0], val[0])
-			} else {
-				min := Unescape(cur[1])
-				max := Unescape(cur[2])
-				opts = append(opts, min[0], max[0])
+			mt := reCharset.FindAllSubmatch(buf.Bytes(), -1)
+			for _, cur := range mt {
+				if len(cur[3]) > 0 {
+					val := Unescape(cur[3])
+					opts = append(opts, val[0], val[0])
+				} else {
+					min := Unescape(cur[1])
+					max := Unescape(cur[2])
+					opts = append(opts, min[0], max[0])
+				}
 			}
 		}
+
+	bracketLoop:
+		for {
+			next := t.Get()
+
+			switch next.Type {
+			case TokBraClose:
+				break bracketLoop
+
+			case TokRaw, TokAny:
+				buf.Write(next.Value)
+
+			case TokSpecial:
+				commit()
+
+				switch next.Value[0] {
+				case 'w':
+					opts = append(opts, 'a', 'z', 'A', 'Z', '0', '9', '_', '_')
+				case 'W':
+					opts = append(opts, '!', '/', ':', '@', '[', '^', '`', '`', '{', '~')
+				case 's':
+					opts = append(opts, ' ', ' ', '\t', '\t', '\f', '\f', '\r', '\r', '\n', '\n')
+				case 'S':
+					opts = append(opts, '!', '~')
+				case 'd':
+					opts = append(opts, '0', '9')
+				case 'h':
+					opts = append(opts, '0', '9', 'a', 'f')
+				case 'H':
+					opts = append(opts, '0', '9', 'A', 'F')
+				}
+
+			default:
+				return nil, errUnexpected(next)
+			}
+		}
+
+		commit()
 
 		return t.Multify(t.opt(NewCharset(opts...)))
 
