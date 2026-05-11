@@ -2,12 +2,8 @@ package genex
 
 import (
 	"bytes"
-	"crypto/rand"
-	"encoding/binary"
 	"fmt"
 	"math/big"
-	"sync/atomic"
-	"time"
 )
 
 type byteWriter interface {
@@ -28,21 +24,6 @@ func Readable(b *big.Int) string {
 	}
 
 	return fmt.Sprintf("%e", new(big.Float).SetInt(b))
-}
-
-var state = uint64(time.Now().UnixNano())
-
-func FastRand() int64 {
-	z := atomic.AddUint64(&state, 0x9e3779b97f4a7c15)
-	z = (z ^ (z >> 30)) * 0xbf58476d1ce4e5b9
-	z = (z ^ (z >> 27)) * 0x94d049bb133111eb
-	return int64((z ^ (z >> 31)) & 0x7fff_ffff_ffff_ffff)
-}
-
-func SecureRand() int64 {
-	var buf [8]byte
-	rand.Read(buf[:])
-	return int64(binary.BigEndian.Uint64(buf[:]) & 0x7fff_ffff_ffff_ffff)
 }
 
 func SampleString(gen Generator) string {
@@ -94,4 +75,52 @@ func writeSpecial(w *bytes.Buffer, c byte) {
 	}
 
 	w.WriteByte(c)
+}
+
+func apply[T any](t []T, f func(T) T) []T {
+	ret := make([]T, len(t))
+
+	for i := range t {
+		ret[i] = f(t[i])
+	}
+
+	return ret
+}
+
+func Clone(g Generator, opts ...Option) Generator {
+	switch cast := g.(type) {
+	case *Charset:
+		cpy := *cast
+		return optionApplyFn(&cpy, opts...)
+
+	case *Choice:
+		cpy := *cast
+		cpy.items = apply(cpy.items, func(other Generator) Generator {
+			return Clone(other, opts...)
+		})
+		return optionApplyFn(&cpy, opts...)
+
+	case *Repeat:
+		cpy := *cast
+		cpy.item = Clone(cpy.item, opts...)
+		return optionApplyFn(&cpy, opts...)
+
+	case *Numeric:
+		cpy := *cast
+		return optionApplyFn(&cpy, opts...)
+
+	case *Concat:
+		cpy := *cast
+		cpy.items = apply(cpy.items, func(other Generator) Generator {
+			return Clone(other, opts...)
+		})
+		return optionApplyFn(&cpy, opts...)
+
+	case *Fixed:
+		cpy := *cast
+		return optionApplyFn(&cpy, opts...)
+
+	default:
+		return g
+	}
 }

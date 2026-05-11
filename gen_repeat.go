@@ -7,7 +7,7 @@ import (
 )
 
 type Repeat struct {
-	inner      Generator
+	item       Generator
 	rmin, rmax int
 
 	count    *big.Int
@@ -16,7 +16,7 @@ type Repeat struct {
 }
 
 func (g *Repeat) Complexity() int {
-	return 1 + g.inner.Complexity()
+	return 1 + g.item.Complexity()
 }
 
 func (g *Repeat) Count() *big.Int {
@@ -32,7 +32,7 @@ func (g *Repeat) Iterate() *Iterator {
 	its := make([]*Iterator, g.rmax)
 
 	for i := range g.rmax {
-		its[i] = g.inner.Iterate()
+		its[i] = g.item.Iterate()
 	}
 
 	return &Iterator{
@@ -74,18 +74,18 @@ func (g *Repeat) Sample(w *bytes.Buffer) {
 	count := g.rmin + int(g.rng()%int64(g.rmax-g.rmin+1))
 
 	for range count {
-		g.inner.Sample(w)
+		g.item.Sample(w)
 	}
 }
 
 func (g *Repeat) String() string {
 	if g.rmin == 0 && g.rmax == 1 {
-		return fmt.Sprintf("%s?", g.inner)
+		return fmt.Sprintf("%s?", g.item)
 	}
 	if g.rmin == g.rmax {
-		return fmt.Sprintf("%s{\033[35m%d\033[0m}", g.inner, g.rmin)
+		return fmt.Sprintf("%s{\033[35m%d\033[0m}", g.item, g.rmin)
 	}
-	return fmt.Sprintf("%s{\033[35m%d\033[0m,\033[35m%d\033[0m}", g.inner, g.rmin, g.rmax)
+	return fmt.Sprintf("%s{\033[35m%d\033[0m,\033[35m%d\033[0m}", g.item, g.rmin, g.rmax)
 }
 
 func NewRepeat(g Generator, rmin, rmax int) Generator {
@@ -135,9 +135,9 @@ func NewRepeat(g Generator, rmin, rmax int) Generator {
 	max *= rmax
 
 	return &Repeat{
-		inner: g,
-		rmin:  rmin,
-		rmax:  rmax,
+		item: g,
+		rmin: rmin,
+		rmax: rmax,
 
 		count: c,
 		min:   min,

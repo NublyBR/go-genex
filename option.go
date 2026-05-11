@@ -27,3 +27,10 @@ func optionApply(opts ...Option) func(Generator) Generator {
 		return g
 	}
 }
+
+func optionApplyFn(g Generator, opts ...Option) Generator {
+	for _, o := range opts {
+		g = o(g)
+	}
+	return g
+}

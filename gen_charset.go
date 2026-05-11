@@ -77,7 +77,7 @@ func NewCharset(c ...byte) Generator {
 			*start, *end = *end, *start
 		}
 
-		count += int(*end - *start)
+		count += int(*end-*start) + 1
 	}
 
 	expand := make([]byte, 0, count)
@@ -127,7 +127,7 @@ func NewCharset(c ...byte) Generator {
 	pushrepr(first, expand[len(expand)-1])
 	repr.WriteString("\033[32m]\033[0m")
 
-	expand = expand[:j]
+	expand = expand[:j+1]
 
 	switch len(expand) {
 	case 0:

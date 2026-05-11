@@ -109,7 +109,7 @@ func BenchmarkAll(b *testing.B) {
 			Name: "Repeat",
 			Init: func(b *testing.B) Generator {
 				return &Repeat{
-					inner: NewFixed([]byte("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")),
+					item: NewFixed([]byte("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")),
 
 					rmin: 3,
 					rmax: 3,
