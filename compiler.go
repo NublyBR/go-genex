@@ -386,7 +386,23 @@ func CompileTree(t []Token, opts ...Option) (Generator, error) {
 	return res, nil
 }
 
+func MustCompileTree(t []Token, opts ...Option) Generator {
+	gen, err := CompileTree(t, opts...)
+	if err != nil {
+		panic(err)
+	}
+	return gen
+}
+
 func Compile(s string, opts ...Option) (Generator, error) {
 	tokens := Tokenize([]byte(s))
 	return CompileTree(tokens, opts...)
+}
+
+func MustCompile(s string, opts ...Option) Generator {
+	gen, err := Compile(s, opts...)
+	if err != nil {
+		panic(err)
+	}
+	return gen
 }
