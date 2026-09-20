@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
+	"iter"
 	"math/big"
 	"strings"
 )
@@ -32,16 +33,20 @@ func (g *Choice) Bounds() (int, int) {
 	return g.min, g.max
 }
 
-func (g *Choice) Iterate() *Iterator {
+func (g *Choice) Iterate() iter.Seq[[]byte] {
+	return makeSeq(g)
+}
+
+func (g *Choice) iterate() *iterator {
 	ln := len(g.items)
-	its := make([]*Iterator, ln)
+	its := make([]*iterator, ln)
 	idx := 0
 
 	for i, gen := range g.items {
-		its[i] = gen.Iterate()
+		its[i] = gen.iterate()
 	}
 
-	return &Iterator{
+	return &iterator{
 		get: func(w *bytes.Buffer) {
 			if idx < ln {
 				its[idx].get(w)

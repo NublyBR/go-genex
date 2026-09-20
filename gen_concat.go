@@ -3,6 +3,7 @@ package genex
 import (
 	"bytes"
 	"fmt"
+	"iter"
 	"math/big"
 	"strings"
 )
@@ -30,15 +31,19 @@ func (g *Concat) Bounds() (int, int) {
 	return g.min, g.max
 }
 
-func (g *Concat) Iterate() *Iterator {
+func (g *Concat) Iterate() iter.Seq[[]byte] {
+	return makeSeq(g)
+}
+
+func (g *Concat) iterate() *iterator {
 	ln1 := len(g.items) - 1
-	its := make([]*Iterator, len(g.items))
+	its := make([]*iterator, len(g.items))
 
 	for i, gen := range g.items {
-		its[i] = gen.Iterate()
+		its[i] = gen.iterate()
 	}
 
-	return &Iterator{
+	return &iterator{
 		get: func(w *bytes.Buffer) {
 			for _, it := range its {
 				it.get(w)

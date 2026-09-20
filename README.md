@@ -92,13 +92,12 @@ goarch: amd64
 pkg: github.com/NublyBR/go-genex
 cpu: Intel(R) Core(TM) i5-9600K CPU @ 3.70GHz
 === RUN   BenchmarkRandom
-BenchmarkRandom-6        5525199               211.4 ns/op             0 B/op          0 allocs/op
+BenchmarkRandom-6        3617576               323.5 ns/op             0 B/op          0 allocs/op
 === RUN   BenchmarkIter
-BenchmarkIter-6         11856430               110.7 ns/op             0 B/op          0 allocs/op
+BenchmarkIter-6         12079502               109.5 ns/op             0 B/op          0 allocs/op
 ```
 
 > Keep in mind that while the generator itself is allocation-free, calling `buf.String()` allocates memory on the heap.
-> You may use `buf.Bytes()` to get the underneath buffer and use that, but only for as long as you do not call `iter.Step()`.
 
 ## Use cases
 

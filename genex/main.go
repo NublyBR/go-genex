@@ -56,25 +56,24 @@ func run(_ *cobra.Command, args []string) {
 	)
 	fmt.Fprintf(os.Stderr, "] Time: \033[32m%s\033[0m\n", time.Since(start))
 
-	buf := bytes.NewBuffer(make([]byte, 0, max))
 	out := bufio.NewWriter(os.Stdout)
 	defer out.Flush()
 
 	if argNum <= 0 {
-		iter := gen.Iterate()
-		for iter.Next() {
-			iter.Get(buf)
-			out.Write(buf.Bytes())
+		for next := range gen.Iterate() {
+			out.Write(next)
 			out.WriteByte('\n')
-			buf.Reset()
 		}
-	} else {
-		for i := 0; i < argNum; i++ {
-			gen.Sample(buf)
-			out.Write(buf.Bytes())
-			out.WriteByte('\n')
-			buf.Reset()
-		}
+		return
+	}
+
+	buf := bytes.NewBuffer(make([]byte, 0, max))
+
+	for i := 0; i < argNum; i++ {
+		gen.Sample(buf)
+		out.Write(buf.Bytes())
+		out.WriteByte('\n')
+		buf.Reset()
 	}
 }
 

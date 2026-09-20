@@ -2,6 +2,7 @@ package genex
 
 import (
 	"bytes"
+	"iter"
 	"math/big"
 )
 
@@ -10,10 +11,12 @@ type Channel <-chan string
 type Generator interface {
 	Count() *big.Int
 	Bounds() (int, int)
-	Iterate() *Iterator
+	Iterate() iter.Seq[[]byte]
 	Sample(*bytes.Buffer)
 	String() string
 	Complexity() int
+
+	iterate() *iterator
 }
 
 type RNG func() int64

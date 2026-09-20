@@ -3,6 +3,7 @@ package genex
 import (
 	"bytes"
 	"fmt"
+	"iter"
 	"math/big"
 	"strings"
 )
@@ -30,11 +31,15 @@ func (g *Numeric) Bounds() (int, int) {
 	return g.min, g.max
 }
 
-func (g *Numeric) Iterate() *Iterator {
+func (g *Numeric) Iterate() iter.Seq[[]byte] {
+	return makeSeq(g)
+}
+
+func (g *Numeric) iterate() *iterator {
 	n := g.start
 	buf := make([]byte, g.max)
 
-	return &Iterator{
+	return &iterator{
 		get: func(w *bytes.Buffer) {
 			ptr := numEncode(buf, n, g.base)
 			if g.pad {
@@ -105,8 +110,6 @@ func NewNumeric(base int, start, end, step uint64, pad bool) Generator {
 
 	if step == 0 {
 		step = 1
-	} else if step < 0 {
-		step = -step
 	}
 
 	base = min(max(base, 2), 62)

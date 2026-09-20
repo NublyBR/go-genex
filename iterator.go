@@ -1,28 +1,25 @@
 package genex
 
-import "bytes"
-
-type (
-	ItGet   func(w *bytes.Buffer)
-	ItNext  func() bool
-	ItReset func()
+import (
+	"bytes"
+	"iter"
 )
 
-type Iterator struct {
+type iterator struct {
 	state int // 0:start 1:iter 2:end
-	get   ItGet
-	next  ItNext
-	reset ItReset
+	get   func(w *bytes.Buffer)
+	next  func() bool
+	reset func()
 }
 
-func (i *Iterator) Get(w *bytes.Buffer) {
+func (i *iterator) Get(w *bytes.Buffer) {
 	if i.state != 1 {
 		panic("genex: Get called before Next or after iteration ended")
 	}
 	i.get(w)
 }
 
-func (i *Iterator) Next() bool {
+func (i *iterator) Next() bool {
 	switch {
 	case i.state == 0:
 		i.state = 1
@@ -40,13 +37,22 @@ func (i *Iterator) Next() bool {
 	}
 }
 
-func (i *Iterator) Reset() {
+func (i *iterator) Reset() {
 	i.reset()
 	i.state = 0
 }
 
-var DummyIterator = &Iterator{
-	get:   func(w *bytes.Buffer) {},
-	next:  func() bool { return false },
-	reset: func() {},
+func makeSeq(g Generator) iter.Seq[[]byte] {
+	_, max := g.Bounds()
+	buf := bytes.NewBuffer(make([]byte, 0, max))
+	it := g.iterate()
+	return func(yield func([]byte) bool) {
+		for it.Next() {
+			buf.Reset()
+			it.Get(buf)
+			if !yield(buf.Bytes()) {
+				return
+			}
+		}
+	}
 }

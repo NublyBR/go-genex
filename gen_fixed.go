@@ -2,6 +2,7 @@ package genex
 
 import (
 	"bytes"
+	"iter"
 	"math/big"
 )
 
@@ -19,8 +20,12 @@ func (g Fixed) Bounds() (int, int) {
 	return len(g), len(g)
 }
 
-func (g Fixed) Iterate() *Iterator {
-	return &Iterator{
+func (g Fixed) Iterate() iter.Seq[[]byte] {
+	return makeSeq(g)
+}
+
+func (g Fixed) iterate() *iterator {
+	return &iterator{
 		get:   func(w *bytes.Buffer) { w.Write(g) },
 		next:  func() bool { return false },
 		reset: func() {},

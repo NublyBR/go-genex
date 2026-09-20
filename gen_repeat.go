@@ -3,6 +3,7 @@ package genex
 import (
 	"bytes"
 	"fmt"
+	"iter"
 	"math/big"
 )
 
@@ -27,15 +28,19 @@ func (g *Repeat) Bounds() (int, int) {
 	return g.min, g.max
 }
 
-func (g *Repeat) Iterate() *Iterator {
+func (g *Repeat) Iterate() iter.Seq[[]byte] {
+	return makeSeq(g)
+}
+
+func (g *Repeat) iterate() *iterator {
 	ln := g.rmin
-	its := make([]*Iterator, g.rmax)
+	its := make([]*iterator, g.rmax)
 
 	for i := range g.rmax {
-		its[i] = g.item.Iterate()
+		its[i] = g.item.iterate()
 	}
 
-	return &Iterator{
+	return &iterator{
 		get: func(w *bytes.Buffer) {
 			for i := range min(ln, g.rmax) {
 				its[i].get(w)

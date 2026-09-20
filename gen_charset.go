@@ -2,6 +2,7 @@ package genex
 
 import (
 	"bytes"
+	"iter"
 	"math/big"
 	"sort"
 )
@@ -24,11 +25,15 @@ func (g *Charset) Bounds() (int, int) {
 	return 1, 1
 }
 
-func (g *Charset) Iterate() *Iterator {
+func (g *Charset) Iterate() iter.Seq[[]byte] {
+	return makeSeq(g)
+}
+
+func (g *Charset) iterate() *iterator {
 	ln := len(g.chrs)
 	idx := 0
 
-	return &Iterator{
+	return &iterator{
 		get: func(w *bytes.Buffer) {
 			if idx < ln {
 				w.WriteByte(g.chrs[idx])
