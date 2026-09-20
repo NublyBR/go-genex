@@ -13,10 +13,12 @@ type Generator interface {
 	Bounds() (int, int)
 	Iterate() iter.Seq[[]byte]
 	Sample(*bytes.Buffer)
+	Index(*bytes.Buffer, *big.Int)
 	String() string
 	Complexity() int
 
 	iterate() *iterator
+	export() any
 }
 
 type RNG func() int64

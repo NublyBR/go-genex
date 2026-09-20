@@ -71,8 +71,47 @@ func (g *Choice) iterate() *iterator {
 	}
 }
 
+func (g *Choice) export() any {
+	ret := make([]any, 0, len(g.items))
+	for _, item := range g.items {
+		ret = append(ret, item.export())
+	}
+	return map[string]any{
+		"choice": ret,
+	}
+}
+
 func (g *Choice) Sample(w *bytes.Buffer) {
 	g.items[g.rng()%int64(len(g.items))].Sample(w)
+}
+
+func (g *Choice) Index(w *bytes.Buffer, idx *big.Int) {
+	// Preserve branch-first indexing when all branches have equal sizes.
+	count := g.items[0].Count()
+	equal := true
+	for _, item := range g.items[1:] {
+		if item.Count().Cmp(count) != 0 {
+			equal = false
+			break
+		}
+	}
+	var local big.Int
+	if equal {
+		idx.DivMod(idx, big.NewInt(int64(len(g.items))), &local)
+		g.items[local.Int64()].Index(w, idx)
+		return
+	}
+
+	// Unequal branches occupy blocks sized by their number of results.
+	idx.DivMod(idx, g.count, &local)
+	for _, item := range g.items {
+		count := item.Count()
+		if local.Cmp(count) < 0 {
+			item.Index(w, &local)
+			return
+		}
+		local.Sub(&local, count)
+	}
 }
 
 func (g *Choice) String() string {

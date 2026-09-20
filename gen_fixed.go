@@ -32,7 +32,15 @@ func (g Fixed) iterate() *iterator {
 	}
 }
 
+func (g Fixed) export() any {
+	return []byte(g)
+}
+
 func (g Fixed) Sample(w *bytes.Buffer) {
+	w.Write(g)
+}
+
+func (g Fixed) Index(w *bytes.Buffer, _ *big.Int) {
 	w.Write(g)
 }
 

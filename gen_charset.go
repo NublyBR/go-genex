@@ -10,6 +10,7 @@ import (
 type Charset struct {
 	chrs []byte
 	repr string
+	exp  []byte
 	rng  RNG
 }
 
@@ -49,10 +50,29 @@ func (g *Charset) iterate() *iterator {
 	}
 }
 
+func (g *Charset) export() any {
+	return map[string]any{
+		"charset": g.exp,
+	}
+}
+
 func (g *Charset) Sample(w *bytes.Buffer) {
 	w.WriteByte(
 		g.chrs[g.rng()%int64(len(g.chrs))],
 	)
+}
+
+func (g *Charset) Index(w *bytes.Buffer, idx *big.Int) {
+	var (
+		tmp   big.Int
+		count = big.NewInt(int64(len(g.chrs)))
+	)
+
+	w.WriteByte(
+		g.chrs[tmp.Mod(idx, count).Int64()],
+	)
+
+	idx.Div(idx, count)
 }
 
 func (g *Charset) String() string {
@@ -102,8 +122,10 @@ func NewCharset(c ...byte) Generator {
 
 	repr := bytes.NewBuffer(make([]byte, 0, len(expand)*2+20))
 	repr.WriteString("\033[32m[\033[0m")
+	exp := make([]byte, 0, len(c))
 
 	pushrepr := func(a, b byte) {
+		exp = append(exp, a, b)
 		if a == b {
 			writeSpecial(repr, a)
 			return
@@ -143,6 +165,7 @@ func NewCharset(c ...byte) Generator {
 		return &Charset{
 			chrs: expand,
 			repr: repr.String(),
+			exp:  exp,
 			rng:  FastRand,
 		}
 	}

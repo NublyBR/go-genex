@@ -75,11 +75,49 @@ func (g *Repeat) iterate() *iterator {
 	}
 }
 
+func (g *Repeat) export() any {
+	if g.rmin == g.rmax {
+		return map[string]any{
+			"repeat": g.rmin,
+			"item":   g.item.export(),
+		}
+	}
+
+	return map[string]any{
+		"repeat": []any{g.rmin, g.rmax},
+		"item":   g.item.export(),
+	}
+}
+
 func (g *Repeat) Sample(w *bytes.Buffer) {
 	count := g.rmin + int(g.rng()%int64(g.rmax-g.rmin+1))
 
 	for range count {
 		g.item.Sample(w)
+	}
+}
+
+func (g *Repeat) Index(w *bytes.Buffer, idx *big.Int) {
+	if g.rmax == g.rmin {
+		for range g.rmin {
+			g.item.Index(w, idx)
+		}
+		return
+	}
+
+	var local, block big.Int
+	idx.DivMod(idx, g.count, &local)
+	count := g.item.Count()
+	block.Exp(count, big.NewInt(int64(g.rmin)), nil)
+	for actual := g.rmin; actual <= g.rmax; actual++ {
+		if local.Cmp(&block) < 0 {
+			for range actual {
+				g.item.Index(w, &local)
+			}
+			return
+		}
+		local.Sub(&local, &block)
+		block.Mul(&block, count)
 	}
 }
 

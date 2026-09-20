@@ -8,10 +8,7 @@ import (
 const benchmarkPattern = `((([0-9]|([1-9][0-9])|(1[0-9]{2})|(2[0-4][0-9])|(25[0-5]))\.){3}([0-9]|([1-9][0-9])|(1[0-9]{2})|(2[0-4][0-9])|(25[0-5])))`
 
 func BenchmarkRandom(b *testing.B) {
-	g, err := Compile(benchmarkPattern)
-	if err != nil {
-		b.Fatal(err)
-	}
+	g := MustCompile(benchmarkPattern)
 
 	_, max := g.Bounds()
 
@@ -26,10 +23,7 @@ func BenchmarkRandom(b *testing.B) {
 }
 
 func BenchmarkIter(b *testing.B) {
-	g, err := Compile(benchmarkPattern)
-	if err != nil {
-		b.Fatal(err)
-	}
+	g := MustCompile(benchmarkPattern)
 
 	b.ResetTimer()
 
@@ -43,7 +37,7 @@ func BenchmarkIter(b *testing.B) {
 
 func BenchmarkCompile(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		Compile(benchmarkPattern)
+		MustCompile(benchmarkPattern)
 	}
 }
 

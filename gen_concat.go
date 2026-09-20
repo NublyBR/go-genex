@@ -71,9 +71,23 @@ func (g *Concat) iterate() *iterator {
 	}
 }
 
+func (g *Concat) export() any {
+	ret := make([]any, 0, len(g.items))
+	for _, item := range g.items {
+		ret = append(ret, item.export())
+	}
+	return ret
+}
+
 func (g *Concat) Sample(w *bytes.Buffer) {
 	for _, opt := range g.items {
 		opt.Sample(w)
+	}
+}
+
+func (g *Concat) Index(w *bytes.Buffer, idx *big.Int) {
+	for _, opt := range g.items {
+		opt.Index(w, idx)
 	}
 }
 

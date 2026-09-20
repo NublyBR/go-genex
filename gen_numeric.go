@@ -62,8 +62,53 @@ func (g *Numeric) iterate() *iterator {
 	}
 }
 
+func (g *Numeric) export() any {
+	ret := map[string]any{
+		"start": g.start,
+		"end":   g.end,
+	}
+
+	if g.step != 1 {
+		ret["step"] = g.step
+	}
+
+	if g.base != 10 {
+		ret["base"] = g.base
+	}
+
+	if g.pad {
+		ret["pad"] = true
+	}
+
+	return ret
+}
+
 func (g *Numeric) Sample(w *bytes.Buffer) {
 	n := g.start + (uint64(g.rng())%g.count)*g.step
+	if g.pad {
+		for i := range g.buf {
+			g.buf[i] = numBase[0]
+		}
+	}
+
+	ptr := numEncode(g.buf, n, g.base)
+	if g.pad {
+		w.Write(g.buf)
+	} else {
+		w.Write(ptr)
+	}
+}
+
+func (g *Numeric) Index(w *bytes.Buffer, idx *big.Int) {
+	var (
+		tmp   big.Int
+		count = new(big.Int).SetUint64(g.count)
+	)
+
+	idx.DivMod(idx, count, &tmp)
+
+	var n = g.start + tmp.Uint64()*g.step
+
 	if g.pad {
 		for i := range g.buf {
 			g.buf[i] = numBase[0]
